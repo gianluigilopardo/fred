@@ -18,7 +18,7 @@ To replicate the experiments, simply run:
 ```python3 main.py --dataset DATASET --model MODEL```
 
 * DATASET: restaraunts, yelp 
-* MODEL: logistic_classifier, roberta
+* MODEL: logistic_classifier, forest_classifier, roberta
 
 The code will then compare the FRED, LIME, and Anchors explainers on the given dataset and model, evaluating them on faithfulness, robustness, time, and the proportion of the document used for explainability. 
 
