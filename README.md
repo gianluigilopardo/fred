@@ -1,4 +1,7 @@
 ## Faithful and Robust Local Interpretability for Textual Predictions
+This repository contains the official implementation of 
+> Lopardo, Gianluigi, Frederic Precioso, and Damien Garreau. "[Faithful and Robust Local Interpretability for Textual Predictions](https://arxiv.org/abs/2311.01605)." 
+
 
 The original FRED code and the experiments presented in the paper are both available here. 
 
@@ -37,3 +40,13 @@ exp = explainer.explain_instance(doc)
 print(exp.best)
 ```
 
+
+### Bibtex
+```
+@article{lopardo2023faithful,
+  title={Faithful and Robust Local Interpretability for Textual Predictions},
+  author={Lopardo, Gianluigi and Precioso, Frederic and Garreau, Damien},
+  journal={arXiv preprint arXiv:2311.01605},
+  year={2023}
+}
+```
