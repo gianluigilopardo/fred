@@ -1,4 +1,6 @@
 ## Faithful and Robust Local Interpretability for Textual Predictions
+This repository contains the official implementation of 
+> Lopardo, G., Precioso, F., & Garreau, D. "[Faithful and Robust Local Interpretability for Textual Predictions](https://arxiv.org/abs/2311.01605)." 
 
 The original FRED code and the experiments presented in the paper are both available here. 
 
@@ -18,7 +20,7 @@ To replicate the experiments, simply run:
 ```python3 main.py --dataset DATASET --model MODEL```
 
 * DATASET: restaraunts, yelp 
-* MODEL: logistic_classifier, roberta
+* MODEL: logistic_classifier, forest_classifier, roberta
 
 The code will then compare the FRED, LIME, and Anchors explainers on the given dataset and model, evaluating them on faithfulness, robustness, time, and the proportion of the document used for explainability. 
 
@@ -37,3 +39,13 @@ exp = explainer.explain_instance(doc)
 print(exp.best)
 ```
 
+
+### Bibtex
+```
+@article{lopardo2023faithful,
+  title={Faithful and Robust Local Interpretability for Textual Predictions},
+  author={Lopardo, Gianluigi and Precioso, Frederic and Garreau, Damien},
+  journal={arXiv preprint arXiv:2311.01605},
+  year={2023}
+}
+```
