@@ -56,7 +56,7 @@ class Fred:
         # if alpha=0.99 -> n_sample=4714
         # if alpha=0.9999 -> n_sample=9427
         n_sample = int(
-            np.ceil(np.log(1 - alpha) / np.log(1 - perturb_proba ** max_len)))  # Number of samples to generate
+            np.ceil(np.log(1 - alpha) / np.log(1 - perturb_proba ** 10)))  # Number of samples to generate
 
         perturbed = np.empty((n_sample, b), dtype='U80')  # Array to store perturbed samples
         perturbed[:] = words  # Initialize perturbed samples with original words
