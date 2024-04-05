@@ -1,12 +1,12 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer
+from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, Trainer
 import numpy as np
 
 from .base_model import Model
 
 # Load tokenizer and model, create trainer
-model_name = "siebert/sentiment-roberta-large-english"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name)
+model_name = "distilbert-base-uncased"  # Specify DistilBERT model here
+tokenizer = DistilBertTokenizer.from_pretrained(model_name)
+model = DistilBertForSequenceClassification.from_pretrained(model_name)
 
 
 # Create class for data preparation
@@ -21,13 +21,13 @@ class SimpleDataset:
         return {k: v[idx] for k, v in self.tokenized_texts.items()}
 
 
-class Roberta(Model):
+class DistilBert(Model):
     def __init__(self):
         super().__init__()
         self.model = Trainer(model=model)
 
     def train(self, x, y, **kwargs):
-        pass
+        pass  # You can implement training logic here
 
     def predict(self, x):
         probas = self.predict_proba(x)

@@ -1,10 +1,10 @@
 import argparse
 
-DATASETS = ['restaurants', 'yelp']
-MODELS = ['logistic_classifier', 'tree_classifier', 'forest_classifier', 'roberta']
+DATASETS = ['restaurants', 'yelp', 'tweets', 'imdb']
+MODELS = ['logistic_classifier', 'tree_classifier', 'forest_classifier', 'roberta', 'distilbert']
 
 METRICS = ['sufficiency', 'comprehensiveness', 'robustness', 'aucmorf']
-EXPLAINERS = ['FRED', 'FRED_star', 'FRED_pos', 'FRED_pos_star', 'LIME', 'Anchors']
+EXPLAINERS = ['FRED', 'FRED_pos', 'LIME', 'SHAP', 'Anchor']
 
 
 def parse_args():
@@ -39,22 +39,22 @@ def parse_args():
                         nargs='*',
                         default=EXPLAINERS,
                         help='The explainers to compare.')
+
+    parser.add_argument('--perturb_proba',
+                        type=float,
+                        nargs='*',
+                        default=0.5,
+                        help='FRED sampling perturb_proba.')
+
     parser.add_argument('--sort_data',
                         type=bool,
                         default=True,
                         help='If true, sort dataset by smallest document.')
     parser.add_argument('--repetitions',
                         type=int,
-                        default=5,
+                        default=10,
                         help='Number of iterations to compute robustness.')
-    parser.add_argument('--beam_size',
-                        type=int,
-                        default=4,
-                        help='The beam size to use for all FRED variants.')
-    parser.add_argument('--eps',
-                        type=float,
-                        default=0.3,
-                        help='The threshold for the drop in confidence for FRED_test and FRED_pos_test.')
+
     parser.add_argument('--seed',
                         type=int,
                         default=42,
@@ -63,6 +63,10 @@ def parse_args():
                         type=int,
                         default=0,
                         help='First document of the corpus to evaluate.')
+    parser.add_argument('--end_doc',
+                        type=int,
+                        default=100,
+                        help='Last document of the corpus to evaluate.')
     parser.add_argument('--n_save',
                         type=int,
                         default=5,

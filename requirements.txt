@@ -7,3 +7,9 @@ spacy
 lime
 anchor-exp
 gensim
+textblob
+tabulate
+matplotlib
+datasets
+shap
+ferret

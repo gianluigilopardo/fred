@@ -1,110 +1,110 @@
-import gensim.downloader as api
+import random
 import numpy as np
+
+import spacy
+from textblob import TextBlob
+
+from collections import defaultdict
+
+nlp = spacy.load("en_core_web_lg")  # Load spaCy model for tokenization and POS tagging
+
+SEED = 42
+np.random.seed(SEED)
+random.seed(SEED)
 
 
 class Replacer:
-    """
-    A class for representing and using word embeddings.
 
-    This class allows you to load pre-trained word embedding models and use them to replace words with similar words.
-
-    Example usage:
-
-    ```python
-    wv = Replacer()
-    replaced_word = wv.replace_word("dog")
-
-    print(replaced_word)
-
-    """
-
-    def __init__(self, dataset='glove-wiki-gigaword-100'):
+    def __init__(self, dataset, sentiment_mode='opposite'):
         """
         Initializes the Replacer class.
 
         Args:
-            dataset (str, optional): The name of the pre-trained word embedding model to load. Defaults to 'glove-wiki-gigaword-100'.
+            dataset (list): A list of strings representing documents used to build the category lists.
+            sentiment_mode (str, optional): Controls how sentiment is used for replacement suggestions.
+                                             Options: "opposite" (default), "same", or None (considers all tokens).
         """
+        self.dataset = dataset
+        self.sentiment_mode = sentiment_mode
+        self.category_list = self.generate_category_lists(dataset)
 
-        self.wv = self.get_model(dataset)
-
-    def get_model(self, dataset):
+    def generate_category_lists(self, documents):
         """
-        Loads a pre-trained word embedding model.
+        Builds a dictionary mapping part-of-speech (POS) tags to sets of positive and negative tokens.
+
+        Uses spaCy for tokenization and TextBlob for sentiment polarity.
 
         Args:
-            dataset (str): The name of the pre-trained word embedding model to load.
+            documents (list): A list of strings representing documents.
 
         Returns:
-            gensim.models.Word2Vec: A Gensim Word2Vec model.
+            dict: A dictionary mapping POS tags to tuples of (positive_tokens, negative_tokens).
         """
+        category_lists = defaultdict(lambda: (set(), set()))  # Default to empty sets for positive and negative tokens
+        for doc in documents:
+            doc = nlp(str(doc))
+            for token in doc:
+                category = token.pos_  # POS tag (e.g., noun, verb)
+                sentiment = TextBlob(token.lemma_).sentiment.polarity  # Sentiment polarity (-1 to 1)
+                if sentiment >= -0.1:
+                    category_lists[category][0].add(token.text)  # Add to positive_tokens
+                if sentiment <= +0.1:
+                    category_lists[category][1].add(token.text)  # Add to negative_tokens
+        return category_lists
 
-        wv = api.load(dataset)
-        return wv
-
-    def most_dissimilar(self, word, topn=10):
+    def generate_category_map(self, text):
         """
-        Returns the most dissimilar words to a given word, according to the cosine similarity metric.
+        Generates a dictionary mapping token positions (ids) to candidate replacement tokens.
+
+        Considers sentiment for candidate replacements if sentiment_mode is set.
 
         Args:
-            word (str): The word to find the most dissimilar words for.
-            topn (int, optional): The number of most dissimilar words to return. Defaults to 10.
+            text (str): The input text string.
 
         Returns:
-            tuple[list[str], list[float]]: A tuple containing a list of the most dissimilar words and a list of the corresponding cosine similarity values.
+            dict: A dictionary mapping token ids in the text to lists of candidate replacement tokens.
         """
+        category_lists = self.category_list
+        tokens = text.split()
+        text = ' '.join(tokens)  # Ignore double spaces
+        b = len(tokens)
+        doc = nlp(str(text))
+        category_map = {}
+        for id, token in enumerate(doc):
+            category = token.pos_
+            sentiment = TextBlob(token.text).sentiment.polarity
+            # Access appropriate token list based on sentiment mode
+            if self.sentiment_mode == "opposite":
+                replacements = category_lists[category][1] if sentiment >= 0 else category_lists[category][0]
+            elif self.sentiment_mode == 'same':
+                replacements = category_lists[category][0] if sentiment >= 0 else category_lists[category][1]
+            else:
+                replacements = category_lists[category][0].union(category_lists[category][1])  # All tokens
 
-        wv = self.wv
+            # do not replace token with itself
+            if token.text in replacements:
+                replacements.remove(token.text)
 
-        # Get the word vector for the given word.
-        word_vector = wv[word]
+            if id > 0 and 1 <= len(replacements) <= 3:
+                # if too less replacements, let us take a random set
+                replacements.union(category_map[random.randint(0, id-1)])
+            elif len(replacements) == 0:
+                replacements.add('UNK')
 
-        # Get all of the word vectors in the vocabulary.
-        vectors_all = wv.vectors
+            category_map[id] = replacements
+        return category_map
 
-        # Calculate the cosine similarity between the given word vector and all of the other word vectors in the
-        # vocabulary.
-        cosine_similarity_values = wv.cosine_similarities(word_vector, vectors_all)
-
-        # Get the indices of the least similar words.
-        least_similar_word_indices = cosine_similarity_values.argsort()[0:topn]
-
-        # Get the most dissimilar words.
-        most_dissimilar_words = [wv.index_to_key[i] for i in least_similar_word_indices]
-
-        # Return the most dissimilar words and their corresponding cosine similarity values.
-        return most_dissimilar_words, cosine_similarity_values[0:topn]
-
-    def replace_word(self, word, size):
+    def replace_token(self, token_id, size, category_map):
         """
-        Replaces a word with a word with a probability proportional to the cosine similarity.
+        Suggests replacement tokens for a specific token in the text.
 
         Args:
-            word (str): The word to be replaced.
+            token_id (int): The position (id) of the token to replace in the text.
+            size (int): The number of replacement suggestions to return.
 
         Returns:
-            str: A replaced word.
+            list: A list of size elements, each containing a suggested replacement token.
         """
 
-        wv = self.wv
-        vocabulary = set(wv.key_to_index.keys())
-
-        # Check if the word is in the vocabulary.
-        if word not in vocabulary:
-            return ["UNK"] * size
-
-        # Get the most dissimilar words to the original word.
-        most_dissimilar_words, word_similarity = self.most_dissimilar(word, topn=10)
-        probas = np.exp(-word_similarity) / np.sum(np.exp(-word_similarity), axis=0)
-        # print(most_dissimilar_words)
-        # print(probas)
-
-        # Select a word from the most dissimilar words with a probability inversely proportional to the cosine
-        # similarity.
-        replaced_word = np.random.choice(most_dissimilar_words, p=probas, size=size)
-
-        return replaced_word
-
-
-
-
+        replaced_token = random.choices([w for w in category_map[token_id]], k=size)
+        return replaced_token

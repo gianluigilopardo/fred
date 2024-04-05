@@ -1,7 +1,8 @@
 import pandas as pd
 import os
-# import kaggle
 import re
+
+from sklearn.model_selection import train_test_split
 
 DATASET_PATH = 'data'
 
@@ -12,9 +13,12 @@ class Dataset:
             raise IOError
 
         self.df = pd.read_csv(os.path.join(DATASET_PATH, 'positive_negative_reviews_yelp.csv'), sep='|')
-        self.X = [self.preprocess(x) for x in list(self.df["text"])]
-        self.y = list(self.df["stars"])
+        X = [self.preprocess(x) for x in list(self.df["text"])]
+        y = list(self.df["stars"])
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y)
+        self.class_names = ['negative', 'positive']
 
     def preprocess(self, x):
-        # light preprocessing: remove symbols, keep spaces, lowercase
-        return re.sub('[^a-zA-Z\d\s]', '', x).lower()
+        # light preprocessing: remove symbols, remove double spaces, lowercase
+        x = re.sub('[^a-zA-Z\d\s]', '', x).lower()
+        return re.sub(r"\s+", ' ', x)
